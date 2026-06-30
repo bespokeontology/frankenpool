@@ -162,6 +162,10 @@ Debugged in real time by two agents, one resident on each machine:
 The record is honest because each agent graded its *own* work. The 70B ran across both machines; the
 write-up reflects both halves.
 
+## The doctrine
+The cold receipt is above. The *why* it matters — the thesis this is a receipt for — is in
+**[MANIFESTO.md](MANIFESTO.md)**: read the concrete, not the press release.
+
 ## License
 MIT — see `LICENSE`.
 
