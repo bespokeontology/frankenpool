@@ -1,12 +1,32 @@
 # 🧟 frankenpool
-### Running a 70-billion-parameter LLM across an NVIDIA RTX 4070 and a 5-year-old M1 MacBook — over a $40 Thunderbolt cable
-**A complete, honest field record — 2026-06-29. Debugged live across two machines by two cooperating agents.**
+
+> **Field records of pooling frontier-class LLMs across cheap, mismatched consumer hardware** — an 8 GB NVIDIA gaming laptop and a 5-year-old trade-in MacBook, joined by a **$40 Thunderbolt cable**. Two chapters so far: a 70B run across both machines, and a frontier sparse-MoE *generating content* cross-machine. The rule throughout — **no press releases; every cross-machine claim carries a byte count.** Newest result up top.
 
 ---
 
-## Update — real pooled generation, not just bench/load
-**2026-06-30.** A *separate* receipt from the 70B capacity record below — which stands unchanged. This is the
-first time the pool **generated content across two machines**: not a load, not a benchmark.
+## Chapter 2 — 2026-06-30 · LongCat-Flash-Lite, pooled *(today's test)*
+**The newest result.** A frontier sparse-MoE that shipped **less than 24 hours earlier** — run **solo** on one
+laptop (verified Chinese-domain reasoning) and then **pooled across both machines**, where it *generated content*
+— not a load, not a benchmark. *Chapter 1 below is a separate, earlier experiment (2026-06-29, a different model:
+DeepSeek-R1-70B) and is unchanged.*
+
+### Solo — one 8 GB laptop, and it *reasons*
+Before the pool, the same model ran **solo on a single RTX 4070 laptop** (Q4_K_M, 37.46 GiB, `-ngl 10`) at
+**~16–19 t/s** — and it didn't just run, it produced **verified domain output:**
+- **Mandarin reading recommendations** across distributed systems / hardware-software co-design / manufacturing.
+- The **native-Chinese vocabulary of "organization over scale"** — **体用** (substance/function), **势 vs 器**
+  (configured potential vs mere instrument), Qian Xuesen's **综合集成** (meta-synthesis). The model argued our
+  own thesis back to us, in its own characters.
+- A **Russian-probability → Chinese-ML academic genealogy** — Zhang Bo (Tsinghua); Jun Zhu (advisor: Zhang Bo);
+  Hang Li (Huawei Noah's Ark, author of 《统计学习方法》); Zhiyuan Liu (advisor: Sun Maosong) — **checked against
+  the sources: every name and advisor-lineage correct.** A Western model produces plausible mush on this query;
+  this gave checkable facts, because its training corpus *is* that world.
+
+The point of the model choice: **right matrix beats bigger matrix** — a frontier model on a trade-in-grade laptop,
+producing Chinese-domain knowledge a Western model can't match.
+
+### Pooled — two machines, the framework as witness
+Then the same model **split across both machines** over the cable and **generated content** — receipt below.
 
 ![pooled generation receipt — llama.cpp memory breakdown showing RPC0 (the M1) holding model weights](pool_receipt.png)
 
@@ -40,7 +60,18 @@ parallelism / task allocation; MapReduce is the engineering example.*
 **content generated across two machines**. This run used **LongCat-Flash-Lite (Q4)** — *not* the 70B; the 70B
 result below is a separate capacity record and is unchanged.
 
+### What this chapter does — and doesn't — claim
+- **Does:** a frontier MoE running solo on one cheap laptop *with verified output*, and a real two-machine pool
+  that *generates content* — every cross-machine number measured (framework residency, cable bytes, t/s).
+- **Doesn't:** no speed record (13 t/s pooled), and no claim about pooled-vs-solo speed or hardware-specific
+  bugs — those weren't cleanly measured, so they're not here. The one claim that kept tempting us — *"the pool
+  works"* — went in only after the framework ledger, the cable bytes, **and** a real generated answer all agreed.
+
 ---
+
+## Chapter 1 — 2026-06-29 · DeepSeek-R1-70B, pooled for capacity *(yesterday)*
+### Running a 70-billion-parameter LLM across an NVIDIA RTX 4070 and a 5-year-old M1 MacBook — over a $40 Thunderbolt cable
+**A complete, honest field record — debugged live across two machines by two cooperating agents. A different model and a different night from Chapter 2 above.**
 
 > This is not a clean success story, and that's the point. It's eight walls, a kernel panic, a model
 > that crashed ten times, half a dozen tools that didn't work, two wrong calls about giving up — and
