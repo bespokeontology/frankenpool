@@ -120,6 +120,9 @@ model weights, and watch the Thunderbolt interface `tx_bytes` for a multi-GB jum
 it isn't a pool — it's one machine wearing an RPC label.
 
 ### Why this matters — LongCat vs the 70B (same rig, measured)
+
+![LongCat-Flash-Lite outperforms DeepSeek-R1-70B — 9.3x faster pooled generation on the same two machines, 13.0 vs 1.4 t/s](longcat_vs_deepseek.png)
+
 The two chapters are a controlled before/after on the *same two machines and the same $40 cable* — and the
 contrast is the whole point:
 
