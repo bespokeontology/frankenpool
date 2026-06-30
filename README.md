@@ -2,6 +2,46 @@
 ### Running a 70-billion-parameter LLM across an NVIDIA RTX 4070 and a 5-year-old M1 MacBook — over a $40 Thunderbolt cable
 **A complete, honest field record — 2026-06-29. Debugged live across two machines by two cooperating agents.**
 
+---
+
+## Update — real pooled generation, not just bench/load
+**2026-06-30.** A *separate* receipt from the 70B capacity record below — which stands unchanged. This is the
+first time the pool **generated content across two machines**: not a load, not a benchmark.
+
+![pooled generation receipt — llama.cpp memory breakdown showing RPC0 (the M1) holding model weights](pool_receipt.png)
+
+**1. Model / run**
+- Model: **LongCat-Flash-Lite** (68.56B sparse-MoE, Q4_K_M), fork build `56abe85`.
+- Dell client (RTX 4070) ⟷ **M1 worker at `10.55.0.2:50053`** over Thunderbolt-IP.
+- Backend / route: **`CUDA,RPC`**, `-sm layer -ngl 8 -ts 4,4`.
+- Real Chinese prompt: *为什么"算力的组织胜过单纯的规模"(传动系统胜过引擎)?用三句话,并举一个工程例子。*
+- Generated answer (excerpt): *"算力的组织决定了计算资源的利用效率和适应性…一个具体的工程例子是 MapReduce 编程模型…"*
+
+**2. Framework-confirmed split** — llama.cpp memory breakdown, verbatim:
+```
+- RPC0 (10.55.0.2:50053)      |  3975 MiB = 2996 MiB model weights + ~970 MiB compute/residency   ← the M1
+- CUDA0 (RTX 4070 Laptop GPU) |  2949 MiB = 1969 MiB model weights                                ← the Dell GPU
+- Host                        | 33774 MiB                                                         ← Dell RAM share
+```
+
+**3. Cable receipt** — **3,876 MB streamed to the M1** during the real pooled run. This matches the M1's
+~3975 MiB framework-reported residency. The bytes crossed the Thunderbolt link *during the run*.
+
+**4. Generation receipt** — Prompt **27.2 t/s**, Generation **13.0 t/s**. English gloss of the answer:
+*organization sets utilization and adaptability; raw scale is quantity-stacking; efficient organization enables
+parallelism / task allocation; MapReduce is the engineering example.*
+
+**5. The claim (stated precisely):**
+> This is the first confirmed pooled-generated content record in this repo: the model produced coherent output
+> while llama.cpp reported nonzero RPC0 model-weight residency on the M1 and live cable counters recorded
+> multi-GB transfer matching that residency.
+
+**real pooled generation** · **framework-confirmed RPC0 weight residency** · **byte-proven over Thunderbolt** ·
+**content generated across two machines**. This run used **LongCat-Flash-Lite (Q4)** — *not* the 70B; the 70B
+result below is a separate capacity record and is unchanged.
+
+---
+
 > This is not a clean success story, and that's the point. It's eight walls, a kernel panic, a model
 > that crashed ten times, half a dozen tools that didn't work, two wrong calls about giving up — and
 > a 70-billion-parameter model that ran across two consumer laptops anyway. **The failures are the
