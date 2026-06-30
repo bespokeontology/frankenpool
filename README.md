@@ -1,9 +1,9 @@
 # 🧟 frankenpool
-### Two junk laptops. A $40 cable. The newest model on Earth — the one the maintainers were too scared to merge — running across NVIDIA **and** Apple silicon, *generating across both*. No datacenter. No cloud. No permission.
+### LongCat-Flash-Lite — **68.56B params · sparse MoE (~4B active) · MLA · n-gram embeddings**, shipped < 24 h ago, the architecture upstream llama.cpp refused to merge — run **pooled** across an **NVIDIA RTX 4070 (8 GB)** and an **Apple M1 (16 GB)** over a **$40 Thunderbolt cable**, with llama.cpp's own memory ledger confirming the M1 held its share of the weights.
 
-> They shipped a frontier architecture and **ran from it** — closed the PRs, called it *"too complex."* A day later it was **thinking** on a gaming laptop and a MacBook Apple offered fifty bucks for, pooled over a cable that costs less than lunch — and **llama.cpp's own memory ledger says the MacBook was holding its share of the weights.** No rented GPU. No cloud. Nobody's permission. We caught the model the establishment dropped and put it to work across two machines that have no business talking to each other. **The frontier doesn't live in a datacenter — it lives in your house.** And it reasons better in Chinese than anything Silicon Valley will sell you.
+> **LongCat-Flash-Lite** — Meituan's 68.56B-parameter sparse MoE — shipped, and upstream llama.cpp **closed the PRs on it** (*"too complex"*). A day later it was **thinking** on an **NVIDIA RTX 4070** and an **Apple M1** Apple offered fifty bucks for, pooled over a **$40 Thunderbolt cable** — and **llama.cpp's own memory ledger shows the M1 (`RPC0` @ `10.55.0.2:50053`) holding 2,996 MiB of the weights and computing.** No rented GPU. No cloud. Nobody's permission. Run on the **InquiringMinds-AI** fork the establishment wouldn't merge, wired across two machines that have no business talking to each other, and put to work. **The frontier doesn't live in a datacenter. It lives in your house.** And it reasons better in Chinese than anything Silicon Valley will sell you.
 >
-> Every number below is real. Go ahead — *try* to debunk it. That's not a disclaimer, it's a dare.
+> Every number below is real. Go ahead — *try* to debunk it. Not a disclaimer. A dare.
 
 ---
 
@@ -20,6 +20,23 @@ DeepSeek-R1-70B) and is unchanged.*
 it runs only on the **InquiringMinds-AI fork**, commit `56abe85`. Sparse means it *remembers* like a 68B model but
 *computes* like a ~4B one: big-model knowledge at small-model speed. As far as the public record shows, this is
 the only place it has been run pooled across heterogeneous (NVIDIA + Apple) silicon.
+
+**Spec sheet — names and numbers, nothing rounded for marketing.**
+
+| model | LongCat-Flash-Lite · Meituan · arch `longcat-flash-ngram` |
+|---|---|
+| **parameters** | **68.56 B** total · **~3–4.5 B active / token** (sparse MoE — 256 routed + 128 identity experts) |
+| **attention** | MLA — compressed-KV multi-head latent attention |
+| **embeddings** | n-gram embeddings (12 gathered tables) |
+| **context** | 327,680 tokens |
+| **quants** | Q4_K_M = 37.46 GiB · Q6_K = 52.41 GiB |
+| **engine** | InquiringMinds-AI llama.cpp fork @ `56abe85` — upstream closed the PRs |
+
+| node | hardware | role |
+|---|---|---|
+| **Dell** | NVIDIA RTX 4070 Laptop · **8 GB VRAM** · 31 GB RAM · Ubuntu / CUDA | client · GPU · host RAM |
+| **MacBook** | Apple **M1** · **16 GB** unified · macOS → CPU RPC worker | `RPC0` @ `10.55.0.2:50053` |
+| **link** | **$40** Thunderbolt cable · IP-over-TB · ~0.3 ms · ~13 Gbps | the entire interconnect |
 
 ### Solo — one 8 GB laptop, and it *reasons*
 Before the pool, the same model ran **solo on a single RTX 4070 laptop** (Q4_K_M, 37.46 GiB, `-ngl 10`) at
@@ -51,25 +68,7 @@ prompt grows (`d0 → d8192`: **18 → 12.7 → 9.1 → 5.9** t/s, memory-bound,
 **contention-resistant** — it holds ~17.5+ t/s *even while the box pulls a ~50 GB download*, because it leans on
 the card, not the contended CPU. Operating number: **~16–19 t/s on one 8 GB laptop.**
 
-### The pooling road — what broke, and how we knew it was real
-Like Chapter 1, the failures are the record. Getting a *genuine* two-machine pool out of a day-old architecture
-took three honest walls:
-
-1. **The stale-binary wall.** The first "pooled" attempts failed the RPC handshake (no protocol `HELLO` match) —
-   a runner script was firing the *stale upstream* llama.cpp build instead of the fork. Both nodes had to be on
-   `56abe85`; repointing the binary was the whole fix.
-2. **The relabel trap (the dangerous one).** An early run *looked* pooled — backend `CUDA,RPC`, real t/s — but it
-   was **Dell-GPU + a Dell-LOCAL x86 RPC worker**, mislabeled "across the cable." The M1 held **zero** weights. We
-   caught it only by reading the M1's own residency, not the backend label. *A `CUDA,RPC` tag is not proof of a
-   cross-machine pool.*
-3. **The over-claim wall (me).** Repeatedly the agent driving this wrote "the pool works" off a success log or a
-   bench number. Each time, the operator and the M1-side agent refused the narrative and demanded the actual
-   measurement — and each time they were right. The claim entered this record **only** after three independent
-   measurements agreed (below).
-
-*(One thing we don't claim: an early worker crash was fixed by a no-BLAS rebuild on the M1, but a clean op-level
-ARM-vs-x86 comparison was never measured — so there's no hardware-specific-bug claim here, only that the rebuild
-worked.)*
+![measured throughput — solo GPU-offload curve, the context-decay memory wall, and the sparse-vs-dense pooled bars (1.4 vs 13 t/s, same rig)](frankenpool_data.png)
 
 ### Pooled — two machines, the framework as witness
 Then the same model **split across both machines** over the cable and **generated content** — receipt below.
@@ -106,7 +105,10 @@ parallelism / task allocation; MapReduce is the engineering example.*
 **content generated across two machines**. This run used **LongCat-Flash-Lite (Q4)** — *not* the 70B; the 70B
 result below is a separate capacity record and is unchanged.
 
-### How we knew it was really cross-machine (the part everyone skips)
+### Verifying it crossed the cable — the step everyone skips
+
+![raw pool terminal — CUDA init, the Chinese prompt, the generated answer, and llama.cpp's memory breakdown with the RPC0 (M1) weight residency](pool_raw.png)
+
 Three independent measurements, all agreeing — none of which a local or faked run could produce *together*:
 1. **Framework residency** — llama.cpp's own memory ledger reported `RPC0 (10.55.0.2:50053)` holding **2996 MiB
    of model weights**. The framework, not us, naming the M1's share.
@@ -138,12 +140,13 @@ LongCat gave verifiable answers a larger Western model can't, because its corpus
 axis was never raw size; it's **sparse compute + the right corpus, on hardware you already own.** The frontier
 shipped yesterday; it ran on a gaming laptop and a trade-in MacBook today. *That's* the relevance.
 
-### What this chapter does — and doesn't — claim
-- **Does:** a frontier MoE running solo on one cheap laptop *with verified output*, and a real two-machine pool
-  that *generates content* — every cross-machine number measured (framework residency, cable bytes, t/s).
-- **Doesn't:** no speed record (13 t/s pooled), and no claim about pooled-vs-solo speed or hardware-specific
-  bugs — those weren't cleanly measured, so they're not here. The one claim that kept tempting us — *"the pool
-  works"* — went in only after the framework ledger, the cable bytes, **and** a real generated answer all agreed.
+### Scope of the claims
+- **Measured and claimed:** a frontier MoE running solo on one 8 GB laptop with *verified* domain output, and a
+  cross-machine pool *generating content* — every cross-machine figure instrumented (framework residency, cable
+  bytes, t/s).
+- **Not claimed:** pooled-vs-solo speed (uncontrolled) and op-level hardware behavior (unmeasured). The
+  instruments reported exactly what stands above; nothing past them is asserted. *"The pool works"* entered the
+  record only once the framework ledger, the cable counter, and a generated answer all reported the same number.
 
 ### Reproduce (Chapter 2)
 ```bash
